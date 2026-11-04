@@ -1,0 +1,269 @@
+<title>Review Desk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one narrow writing column (business → rating → your review), then a wrapping grid of per-site cards */
+:root{
+  --bg:#f3f4f6; --surface:#ffffff; --ink:#1b2230; --muted:#5d6676; --line:#d9dde4;
+  --accent:#2f5bd3; --accent-ink:#ffffff; --star:#e0a100; --ok:#1f8a4c; --ok-bg:#e3f4ea;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12161f; --surface:#1b212d; --ink:#e7eaf0; --muted:#9aa3b2; --line:#2e3646;
+  --accent:#7d9cff; --accent-ink:#0e1320; --star:#f2bd2c; --ok:#5fd08f; --ok-bg:#183326; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161f; --surface:#1b212d; --ink:#e7eaf0; --muted:#9aa3b2; --line:#2e3646;
+  --accent:#7d9cff; --accent-ink:#0e1320; --star:#f2bd2c; --ok:#5fd08f; --ok-bg:#183326; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:28px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px}
+h1{font-family:var(--display);font-size:2rem;margin:0;letter-spacing:-.01em}
+.lede{color:var(--muted);margin:4px 0 0;max-width:60ch}
+h2{font-family:var(--display);font-size:1.15rem;margin:0 0 10px}
+.compose{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:20px}
+@media (max-width:760px){.compose{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px;min-width:0}
+label{font-size:.8rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px}
+input[type=text],textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 11px}
+textarea{resize:vertical;min-height:120px}
+#master{min-height:220px}
+input:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stars{display:flex;gap:4px}
+.stars button{background:none;border:0;padding:2px;font-size:1.9rem;line-height:1;color:var(--line);cursor:pointer}
+.stars button.on{color:var(--star)}
+.hint{font-size:.85rem;color:var(--muted)}
+.count{font-family:var(--mono);font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.count.over{color:#d23c3c}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:4px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:10px;min-width:0}
+.card.posted{border-color:var(--ok)}
+.card-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card-head h3{margin:0;font-family:var(--display);font-size:1.1rem}
+.style{font-size:.8rem;color:var(--muted)}
+.rating-line{font-size:.9rem}
+.rating-line .s{color:var(--star);letter-spacing:1px}
+.edited{font-size:.75rem;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.05em}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{font:inherit;font-size:.9rem;font-weight:600;border-radius:6px;padding:7px 12px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--ink);text-decoration:none;display:inline-block}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:none;border-color:transparent;color:var(--muted);padding-inline:6px}
+.posted-toggle{display:flex;gap:6px;align-items:center;font-size:.9rem;margin-left:auto;cursor:pointer}
+.posted-badge{font-size:.75rem;font-weight:600;color:var(--ok);background:var(--ok-bg);border-radius:999px;padding:2px 8px}
+.progress{font-family:var(--mono);font-size:.9rem;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:.9rem}
+.steps{margin:0;padding-left:1.2em;color:var(--muted);font-size:.9rem}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Review Desk</h1>
+      <p class="lede">Write your review once, adjust it for each site if you want, then copy it and post it yourself from your own account.</p>
+    </div>
+    <div class="row">
+      <span class="progress" id="progress"></span>
+      <button class="btn" id="newBtn" type="button">Start a new review</button>
+    </div>
+  </header>
+
+  <section class="compose">
+    <div class="panel">
+      <div>
+        <label for="biz">Business</label>
+        <input type="text" id="biz" placeholder="e.g. Lakeview Bike Shop">
+      </div>
+      <div>
+        <label for="loc">City or neighborhood</label>
+        <input type="text" id="loc" placeholder="e.g. Chicago, IL">
+      </div>
+      <div>
+        <label>Your rating</label>
+        <div class="stars" id="stars" role="radiogroup" aria-label="Your rating"></div>
+        <div class="hint" id="ratingHint"></div>
+      </div>
+      <div>
+        <label>How to post</label>
+        <ol class="steps">
+          <li>Write your review on the right.</li>
+          <li>On each site card, press <b>Copy text</b>, then <b>Find on site</b>.</li>
+          <li>Open the business page, paste, pick your rating and submit.</li>
+          <li>Tick <b>Posted</b> so you know where you're done.</li>
+        </ol>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <label for="master" style="margin:0">Your review</label>
+        <span class="count" id="masterCount"></span>
+      </div>
+      <textarea id="master" placeholder="What happened, what stood out, would you go back?"></textarea>
+      <div class="hint">Each site starts with this text. Edit a site's copy below if you want a shorter or different version there; changes here keep flowing to any site you haven't edited.</div>
+      <div>
+        <label>Sites</label>
+        <div class="chips" id="chips"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Post to each site</h2>
+    <div class="grid" id="grid"></div>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const PLATFORMS = [
+  {id:"google", name:"Google", style:"stars", max:4096, on:true,
+   url:(b,l)=>"https://www.google.com/maps/search/?api=1&query="+enc(b+" "+l)},
+  {id:"yelp", name:"Yelp", style:"stars", max:5000, on:true,
+   url:(b,l)=>"https://www.yelp.com/search?find_desc="+enc(b)+"&find_loc="+enc(l)},
+  {id:"facebook", name:"Facebook", style:"recommend", on:true,
+   url:(b,l)=>"https://www.facebook.com/search/pages/?q="+enc(b+" "+l)},
+  {id:"nextdoor", name:"Nextdoor", style:"recommend", on:true,
+   url:(b,l)=>"https://nextdoor.com/search/?query="+enc(b)},
+  {id:"bbb", name:"BBB", style:"stars", on:false,
+   url:(b,l)=>"https://www.bbb.org/search?find_text="+enc(b)+"&find_loc="+enc(l)},
+  {id:"trustpilot", name:"Trustpilot", style:"stars", on:false,
+   url:(b,l)=>"https://www.trustpilot.com/search?query="+enc(b)},
+  {id:"tripadvisor", name:"Tripadvisor", style:"bubbles", on:false,
+   url:(b,l)=>"https://www.tripadvisor.com/Search?q="+enc(b+" "+l)},
+  {id:"bing", name:"Bing Places", style:"stars", on:false,
+   url:(b,l)=>"https://www.bing.com/maps?q="+enc(b+" "+l)},
+];
+const enc = s => encodeURIComponent(s.trim());
+const KEY = "review-desk-v1";
+const EXAMPLE = {biz:"Lakeview Bike Shop", loc:"Chicago, IL", rating:5,
+  master:"Example text, replace with your own: Brought in my commuter bike with a slipping chain on a Saturday morning. They looked at it while I waited, explained the worn cassette, and quoted the part before doing any work. Done in under an hour and it shifts better than when it was new.",
+  overrides:{}, posted:{}, enabled:null};
+
+let state;
+try { state = JSON.parse(localStorage.getItem(KEY)) || null } catch(e){ state = null }
+if(!state) state = structuredClone(EXAMPLE);
+if(!state.enabled) state.enabled = Object.fromEntries(PLATFORMS.map(p=>[p.id,p.on]));
+const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(state)) }catch(e){} };
+
+const $ = id => document.getElementById(id);
+const textFor = p => state.overrides[p.id] ?? state.master;
+
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true,1800) }
+
+function renderStars(){
+  const box=$("stars"); box.innerHTML="";
+  for(let i=1;i<=5;i++){
+    const b=document.createElement("button"); b.type="button"; b.textContent="★";
+    b.className = i<=state.rating ? "on":""; b.setAttribute("role","radio");
+    b.setAttribute("aria-checked", i===state.rating); b.setAttribute("aria-label", i+" star"+(i>1?"s":""));
+    b.onclick=()=>{ state.rating=i; save(); renderStars(); renderCards() };
+    box.appendChild(b);
+  }
+  $("ratingHint").textContent = state.rating ? state.rating+" of 5. Facebook and Nextdoor ask Recommend yes or no instead of stars." : "Pick a rating.";
+}
+
+function renderChips(){
+  const box=$("chips"); box.innerHTML="";
+  PLATFORMS.forEach(p=>{
+    const c=document.createElement("button"); c.type="button"; c.className="chip"; c.textContent=p.name;
+    c.setAttribute("aria-pressed", !!state.enabled[p.id]);
+    c.onclick=()=>{ state.enabled[p.id]=!state.enabled[p.id]; save(); renderChips(); renderCards() };
+    box.appendChild(c);
+  });
+}
+
+function ratingLine(p){
+  const r=state.rating||0;
+  if(p.style==="recommend"){
+    const rec = r>=4 ? "Yes" : r && r<=2 ? "No" : "Your call";
+    return `Recommend: <b>${rec}</b>`;
+  }
+  const unit = p.style==="bubbles" ? "bubbles" : "stars";
+  return `<span class="s">${"★".repeat(r)}${"☆".repeat(5-r)}</span> ${r} ${unit}`;
+}
+
+function renderCards(){
+  const grid=$("grid"); grid.innerHTML="";
+  const active = PLATFORMS.filter(p=>state.enabled[p.id]);
+  active.forEach(p=>{
+    const posted=!!state.posted[p.id], edited = p.id in state.overrides;
+    const card=document.createElement("article"); card.className="card"+(posted?" posted":"");
+    card.innerHTML=`
+      <div class="card-head"><h3>${p.name}</h3>
+        ${posted?'<span class="posted-badge">Posted</span>':edited?'<span class="edited">Edited for this site</span>':''}</div>
+      <div class="rating-line">${ratingLine(p)}</div>
+      <textarea id="t-${p.id}" aria-label="${p.name} review text"></textarea>
+      <div class="row" style="justify-content:space-between">
+        <span class="count" id="c-${p.id}"></span>
+        ${edited?`<button type="button" class="btn ghost" data-reset>Use main text</button>`:''}
+      </div>
+      <div class="row">
+        <button type="button" class="btn primary" data-copy>Copy text</button>
+        <a class="btn" target="_blank" rel="noopener" data-find>Find on ${p.name} ↗</a>
+        <label class="posted-toggle" style="text-transform:none;letter-spacing:0;color:var(--ink);font-weight:500;margin-bottom:0">
+          <input type="checkbox" ${posted?"checked":""} data-posted> Posted</label>
+      </div>`;
+    const ta=card.querySelector("textarea"); ta.value=textFor(p);
+    const updCount=()=>{ const n=ta.value.length, c=card.querySelector(".count");
+      c.textContent = p.max ? `${n.toLocaleString()} / ${p.max.toLocaleString()}` : `${n.toLocaleString()} characters`;
+      c.classList.toggle("over", !!p.max && n>p.max) };
+    updCount();
+    ta.oninput=()=>{ state.overrides[p.id]=ta.value; save(); updCount();
+      if(!card.querySelector("[data-reset]")) renderCardsKeepFocus(p.id) };
+    const find=card.querySelector("[data-find]");
+    find.href = p.url(state.biz||"", state.loc||"");
+    card.querySelector("[data-copy]").onclick=()=>{
+      const txt=ta.value;
+      const fallback=()=>{ ta.focus(); ta.select(); toast("Selected. Press Ctrl/Cmd+C to copy.") };
+      if(navigator.clipboard?.writeText){ navigator.clipboard.writeText(txt).then(()=>toast(`Copied for ${p.name}`), fallback) } else fallback();
+    };
+    const r=card.querySelector("[data-reset]"); if(r) r.onclick=()=>{ delete state.overrides[p.id]; save(); renderCards() };
+    card.querySelector("[data-posted]").onchange=e=>{ state.posted[p.id]=e.target.checked; save(); renderCards() };
+    grid.appendChild(card);
+  });
+  const done = active.filter(p=>state.posted[p.id]).length;
+  $("progress").textContent = `${done} of ${active.length} posted`;
+}
+function renderCardsKeepFocus(id){
+  const ta=$("t-"+id), pos=ta.selectionStart; renderCards();
+  const n=$("t-"+id); n.focus(); n.setSelectionRange(pos,pos);
+}
+
+function renderAll(){
+  $("biz").value=state.biz||""; $("loc").value=state.loc||""; $("master").value=state.master||"";
+  updMaster(); renderStars(); renderChips(); renderCards();
+}
+function updMaster(){ $("masterCount").textContent = (state.master||"").length.toLocaleString()+" characters" }
+
+$("biz").oninput=e=>{ state.biz=e.target.value; save(); document.querySelectorAll("[data-find]").forEach((a,i)=>{}); renderCardsLinks() };
+$("loc").oninput=e=>{ state.loc=e.target.value; save(); renderCardsLinks() };
+function renderCardsLinks(){
+  PLATFORMS.forEach(p=>{ const t=$("t-"+p.id); if(!t) return;
+    t.closest(".card").querySelector("[data-find]").href=p.url(state.biz||"",state.loc||"") });
+}
+$("master").oninput=e=>{ state.master=e.target.value; save(); updMaster();
+  PLATFORMS.forEach(p=>{ const t=$("t-"+p.id); if(t && !(p.id in state.overrides)){ t.value=state.master; t.dispatchEvent(new Event("count")) } });
+  renderCountsOnly();
+};
+function renderCountsOnly(){
+  PLATFORMS.forEach(p=>{ const t=$("t-"+p.id); if(!t) return; const c=$("c-"+p.id), n=t.value.length;
+    c.textContent = p.max ? `${n.toLocaleString()} / ${p.max.toLocaleString()}` : `${n.toLocaleString()} characters`;
+    c.classList.toggle("over", !!p.max && n>p.max) });
+}
+
+let armed=false;
+$("newBtn").onclick=()=>{
+  if(!armed){ armed=true; $("newBtn").textContent="Click again to clear"; setTimeout(()=>{armed=false;$("newBtn").textContent="Start a new review"},3000); return }
+  const enabled=state.enabled;
+  state={biz:"",loc:"",rating:0,master:"",overrides:{},posted:{},enabled};
+  armed=false; $("newBtn").textContent="Start a new review"; save(); renderAll(); $("biz").focus();
+};
+
+renderAll();
+</script>
